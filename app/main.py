@@ -1,7 +1,8 @@
 from fastapi import FastAPI
+
 from .database import engine
 from . import models
-from .api import organizations
+from .api import organizations, buildings
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -18,6 +19,12 @@ app.include_router(
     organizations.router,
     prefix="/api/organizations",
     tags=["organizations"]
+)
+
+app.include_router(
+    buildings.router,
+    prefix="/api/buildings",
+    tags=["buildings"]
 )
 
 @app.get("/")
