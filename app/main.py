@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from .database import engine
 from . import models
-from .api import organizations, buildings
+from .api import organizations, buildings, activities
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -27,6 +27,11 @@ app.include_router(
     tags=["buildings"]
 )
 
+app.include_router(
+    activities.router,
+    prefix="/api/activities",
+    tags=["activities"]
+)
 @app.get("/")
 def read_root():
     return {
