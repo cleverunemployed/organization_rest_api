@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/organization_db
+      - DATABASE_URL=postgresql://postgres:password@db:5432/organization_db
       - API_KEY=12345
     depends_on:
       - db
@@ -17,7 +17,7 @@ services:
   db:
     image: postgres:13
     environment:
-      - POSTGRES_USER=user
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=organization_db
     ports:
