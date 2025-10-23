@@ -218,8 +218,21 @@ def update_organization(db: Session, organization_id: int, organization_update: 
     return get_organization(db, organization_id)
 
 def delete_organization(db: Session, organization_id: int):
+    """Delete organization and all related phone numbers"""
     db_organization = get_organization(db, organization_id)
     if db_organization:
+        db.execute(
+            models.organization_phones.delete().where(
+                models.organization_phones.c.organization_id == organization_id
+            )
+        )
+        
+        # db.execute(
+        #     models.organization_activities.delete().where(
+        #         models.organization_activities.c.organization_id == organization_id
+        #     )
+        # )
+        
         db.delete(db_organization)
         db.commit()
         return True

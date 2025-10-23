@@ -8,15 +8,16 @@ Base = declarative_base()
 organization_phones = Table(
     'organization_phones',
     Base.metadata,
-    Column('organization_id', Integer, ForeignKey('organizations.id')),
-    Column('phone_number', String(20))
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('organization_id', Integer, ForeignKey('organizations.id', ondelete='CASCADE'), nullable=False),
+    Column('phone_number', String(20), nullable=False)
 )
 
 organization_activities = Table(
     'organization_activities',
     Base.metadata,
-    Column('organization_id', Integer, ForeignKey('organizations.id')),
-    Column('activity_id', Integer, ForeignKey('activities.id'))
+    Column('organization_id', Integer, ForeignKey('organizations.id', ondelete='CASCADE')),
+    Column('activity_id', Integer, ForeignKey('activities.id', ondelete='CASCADE'))
 )
 
 class Building(Base):
@@ -27,7 +28,7 @@ class Building(Base):
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     
-    organizations = relationship("Organization", back_populates="building")
+    organizations = relationship("Organization", back_populates="building", cascade="all, delete-orphan")
 
 class Activity(Base):
     __tablename__ = "activities"
