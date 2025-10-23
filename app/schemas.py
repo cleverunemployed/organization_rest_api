@@ -1,8 +1,69 @@
-from pydantic import BaseModel, ConfigDict
+import re
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import List, Optional
 
 class PhoneNumber(BaseModel):
     number: str
+    
+    @field_validator('number')
+    @classmethod
+    def validate_phone_number(cls, v):
+        if not re.match(r'^[\d\s\-+()\.]+$', v):
+            raise ValueError('Invalid phone number format')
+        return v
+
+class OrganizationBase(BaseModel):
+    name: str
+    building_id: int
+
+class OrganizationCreate(OrganizationBase):
+    phone_numbers: List[str] = []
+    activity_ids: List[int] = []
+    
+    @field_validator('phone_numbers')
+    @classmethod
+    def validate_phone_numbers(cls, v):
+        if not isinstance(v, list):
+            raise ValueError('Phone numbers must be a list')
+        
+        for phone in v:
+            if not re.match(r'^[\d\s\-+()\.]+$', phone):
+                raise ValueError(f'Invalid phone number format: {phone}')
+        return v
+
+class OrganizationUpdate(BaseModel):
+    name: Optional[str] = None
+    building_id: Optional[int] = None
+    phone_numbers: Optional[List[str]] = None
+    activity_ids: Optional[List[int]] = None
+    
+    @field_validator('phone_numbers')
+    @classmethod
+    def validate_phone_numbers(cls, v):
+        if v is not None:
+            if not isinstance(v, list):
+                raise ValueError('Phone numbers must be a list')
+            
+            for phone in v:
+                if not re.match(r'^[\d\s\-+()\.]+$', phone):
+                    raise ValueError(f'Invalid phone number format: {phone}')
+        return v
+
+class Organization(OrganizationBase):
+    id: int
+    phone_numbers: List[str] = []
+    activities: List['Activity'] = []
+    building: 'Building'
+    
+    model_config = ConfigDict(from_attributes=True)
+    
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        if hasattr(obj, '_phone_numbers'):
+            data = {**obj.__dict__, 'phone_numbers': obj._phone_numbers}
+        else:
+            data = obj.__dict__
+        return super().model_validate(data, **kwargs)
 
 class ActivityBase(BaseModel):
     name: str
@@ -30,28 +91,6 @@ class BuildingCreate(BuildingBase):
 
 class Building(BuildingBase):
     id: int
-    
-    model_config = ConfigDict(from_attributes=True)
-
-class OrganizationBase(BaseModel):
-    name: str
-    building_id: int
-
-class OrganizationCreate(OrganizationBase):
-    phone_numbers: List[str] = []
-    activity_ids: List[int] = []
-
-class OrganizationUpdate(BaseModel):
-    name: Optional[str] = None
-    building_id: Optional[int] = None
-    phone_numbers: Optional[List[str]] = None
-    activity_ids: Optional[List[int]] = None
-
-class Organization(OrganizationBase):
-    id: int
-    phone_numbers: List[str] = []
-    activities: List[Activity] = []
-    building: Building
     
     model_config = ConfigDict(from_attributes=True)
 

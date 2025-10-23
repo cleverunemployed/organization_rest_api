@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Table, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -51,5 +52,73 @@ class Organization(Base):
     activities = relationship("Activity", secondary=organization_activities, back_populates="organizations")
     
     @property
-    def phone_numbers(self):
-        return []
+    def phone_numbers(self) -> List[str]:
+        from .database import SessionLocal
+        db = SessionLocal()
+        try:
+            result = db.execute(
+                organization_phones.select().where(
+                    organization_phones.c.organization_id == self.id
+                )
+            )
+            phones = [row.phone_number for row in result]
+            return phones
+        finally:
+            db.close()
+    
+    def add_phone_number(self, phone_number: str) -> None:
+        from .database import SessionLocal
+        db = SessionLocal()
+        try:
+            existing = db.execute(
+                organization_phones.select().where(
+                    (organization_phones.c.organization_id == self.id) &
+                    (organization_phones.c.phone_number == phone_number)
+                )
+            ).first()
+            
+            if not existing:
+                db.execute(
+                    organization_phones.insert().values(
+                        organization_id=self.id,
+                        phone_number=phone_number
+                    )
+                )
+                db.commit()
+        finally:
+            db.close()
+    
+    def remove_phone_number(self, phone_number: str) -> None:
+        from .database import SessionLocal
+        db = SessionLocal()
+        try:
+            db.execute(
+                organization_phones.delete().where(
+                    (organization_phones.c.organization_id == self.id) &
+                    (organization_phones.c.phone_number == phone_number)
+                )
+            )
+            db.commit()
+        finally:
+            db.close()
+    
+    def set_phone_numbers(self, phone_numbers: List[str]) -> None:
+        from .database import SessionLocal
+        db = SessionLocal()
+        try:
+            db.execute(
+                organization_phones.delete().where(
+                    organization_phones.c.organization_id == self.id
+                )
+            )
+
+            for phone in phone_numbers:
+                db.execute(
+                    organization_phones.insert().values(
+                        organization_id=self.id,
+                        phone_number=phone
+                    )
+                )
+            db.commit()
+        finally:
+            db.close()
